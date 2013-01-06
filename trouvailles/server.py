@@ -1,7 +1,6 @@
 from pyramid.config import Configurator
 
 
-
 class SettingsDict(dict):
 
     separator = "."

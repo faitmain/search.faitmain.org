@@ -33,17 +33,20 @@ class Database(object):
     def __init__(self, dbpath, create=False):
         if not os.path.exists(dbpath) and create:
             create_index(dbpath)
-
+        self.dbpath = dbpath
         self.conn = xappy.IndexerConnection(dbpath)
-        self._search = xappy.SearchConnection(dbpath)
 
     def index(self, url):
-        query = self._search.query_field('url', url)
-        results = self._search.search(query, 0, 10)
-        if len(results) > 0:
-            # already indexed
-            print('%r already indexed' % url)
-            return
+        _search = xappy.SearchConnection(self.dbpath)
+        try:
+            query = _search.query_field('url', url)
+            results = _search.search(query, 0, 10)
+            if len(results) > 0:
+                # already indexed
+                print('%r already indexed' % url)
+                return
+        finally:
+            _search.close()
 
         content = extract_content(url)
         doc = xappy.UnprocessedDocument()
@@ -55,11 +58,16 @@ class Database(object):
         self.conn.flush()
 
     def search(self, query):
-        query = self._search.query_parse(query,
-                                         default_op=self._search.OP_AND)
-        results = self._search.search(query, 0, 10)
-        for result in results:
-            yield result.data['url'][0]
+        # XXX pool ?
+        _search = xappy.SearchConnection(self.dbpath)
+        try:
+            query = _search.query_parse(query,
+                                         default_op=_search.OP_AND)
+            results = _search.search(query, 0, 10)
+            for result in results:
+                yield result.data['url'][0]
+        finally:
+            _search.close()
 
 
 if __name__ == '__main__':
