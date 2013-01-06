@@ -41,8 +41,8 @@ def index(request):
         root = parsed.scheme + '://' + parsed.netloc
         map = json.loads(map)
 
-        for url in map.keys():
-            db.index(root + url)
+        for url in map['urlset']:
+            db.index(root + url['loc'])
             indexed += 1
 
     db.flush()
