@@ -1,5 +1,8 @@
+import json
 from trouvailles import __version__
 from collections import defaultdict
+from urlparse import urlparse
+import urllib2
 
 from pyramid.exceptions import Forbidden
 from pyramid.security import authenticated_userid, effective_principals
@@ -25,10 +28,25 @@ def index(request):
     """Index an url.
     """
     db = request.registry.settings['database']
-    url = request.json['url']
-    db.index(url)
+    url = request.json.get('url')
+    indexed = 0
+
+    if url is not None:
+        db.index(url)
+        indexed += 1
+    else:
+        sitemap = request.json['sitemap']
+        map = urllib2.urlopen(sitemap).read()
+        parsed = urlparse(sitemap)
+        root = parsed.scheme + '://' + parsed.netloc
+        map = json.loads(map)
+
+        for url in map.keys():
+            db.index(root + url)
+            indexed += 1
+
     db.flush()
-    return {'success': True}
+    return {'success': True, 'indexed': indexed}
 
 
 @indexer.get()
