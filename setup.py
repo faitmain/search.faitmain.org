@@ -33,5 +33,5 @@ setup(name='trouvailles',
       install_requires=install_requires,
       entry_points="""
       [console_scripts]
-      trouvailles-serve = trouvailles.server:main
+      trouvailles-serve = trouvailles.runserver:main
       """)
