@@ -15,7 +15,7 @@ def extract_content(url):
     body = ' '.join(body)
     body = body.replace('\n', '')
     body = body.encode('utf8')
-    return body
+    return body, soup.title.text
 
 
 def create_index(dbpath):
@@ -25,6 +25,8 @@ def create_index(dbpath):
         conn.add_field_action('url', xappy.FieldActions.INDEX_EXACT)
         conn.add_field_action('text', xappy.FieldActions.STORE_CONTENT)
         conn.add_field_action('text', xappy.FieldActions.INDEX_FREETEXT, language='fr')
+        conn.add_field_action('title', xappy.FieldActions.STORE_CONTENT)
+        conn.add_field_action('title', xappy.FieldActions.INDEX_FREETEXT, language='fr')
     finally:
         conn.close()
 
@@ -48,10 +50,11 @@ class Database(object):
         finally:
             _search.close()
 
-        content = extract_content(url)
+        content, title = extract_content(url)
         doc = xappy.UnprocessedDocument()
         doc.fields.append(xappy.Field('url', url))
         doc.fields.append(xappy.Field('text', content))
+        doc.fields.append(xappy.Field('title', title))
         self.conn.add(doc)
 
     def flush(self):
@@ -65,7 +68,7 @@ class Database(object):
                                          default_op=_search.OP_AND)
             results = _search.search(query, 0, 10)
             for result in results:
-                yield result.data['url'][0]
+                yield result.data['title'][0], result.data['url'][0]
         finally:
             _search.close()
 
