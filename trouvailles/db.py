@@ -45,8 +45,9 @@ class Database(object):
             results = _search.search(query, 0, 10)
             if len(results) > 0:
                 # already indexed
-                print('%r already indexed' % url)
-                return
+                for result in results:
+                    self.conn.delete(result.id)
+                self.conn.flush()
         finally:
             _search.close()
 
@@ -75,6 +76,8 @@ class Database(object):
 
 if __name__ == '__main__':
     db = Database('/tmp/ok', create=True)
+    db.index('http://faitmain.org/janvier-2013/wtf.html')
+    db.flush()
     db.index('http://faitmain.org/janvier-2013/wtf.html')
     db.flush()
 
