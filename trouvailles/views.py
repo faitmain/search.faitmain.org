@@ -42,6 +42,8 @@ def index(request):
         map = json.loads(map)
 
         for url in map['urlset']:
+            if url['indexable'] == 0:
+                continue
             db.index(root + url['loc'])
             indexed += 1
 
